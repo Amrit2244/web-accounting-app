@@ -1,0 +1,308 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Auth & Admin ---
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String // Hashed password
+  role          UserRole  @default(USER)
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  companies     UserCompany[]
+  auditLogs     AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Company {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  address      String?
+  gstin        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  users        UserCompany[]
+  groups       AccountingGroup[]
+  ledgers      Ledger[]
+  stockGroups  StockGroup[]
+  stockItems   StockItem[]
+  units        UnitOfMeasure[]
+  godowns      Godown[]
+  vouchers     Voucher[]
+  permissions  Permission[]
+  auditLogs    AuditLog[]    // ADD THIS LINE
+}
+
+
+model UserCompany {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  role      UserRole @default(USER)
+
+  @@unique([userId, companyId])
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  companyId String
+  role      UserRole
+  module    String
+  canView   Boolean  @default(false)
+  canCreate Boolean  @default(false)
+  canEdit   Boolean  @default(false)
+  canDelete Boolean  @default(false)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, role, module])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  companyId   String
+  action      String
+  entityType  String
+  entityId    String
+  oldValue    Json?
+  newValue    Json?
+  timestamp   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  company     Company  @relation(fields: [companyId], references: [id]) // This line is now valid
+}
+
+// --- Accounting Master Setup ---
+model AccountingGroup {
+  id            String            @id @default(cuid())
+  companyId     String
+  name          String
+  parentGroupId String?
+  isPrimary     Boolean           @default(false)
+  nature        String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentGroup   AccountingGroup?  @relation("ChildGroups", fields: [parentGroupId], references: [id])
+  childGroups   AccountingGroup[] @relation("ChildGroups")
+  ledgers       Ledger[]
+
+  @@unique([companyId, name])
+}
+
+model Ledger {
+  id             String          @id @default(cuid())
+  companyId      String
+  accountingGroupId String
+  name           String
+  alias          String?
+  openingBalance Decimal         @default(0.00) @db.Decimal(10, 2)
+  isDebitOpening Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  group          AccountingGroup @relation(fields: [accountingGroupId], references: [id])
+  ledgerEntries  LedgerEntry[]
+
+  @@unique([companyId, name])
+}
+
+model LedgerEntry {
+  id        String   @id @default(cuid())
+  ledgerId  String
+  voucherId String
+  debit     Decimal  @default(0.00) @db.Decimal(10, 2)
+  credit    Decimal  @default(0.00) @db.Decimal(10, 2)
+  date      DateTime
+  narration String?
+  createdAt DateTime @default(now())
+  ledger    Ledger   @relation(fields: [ledgerId], references: [id])
+  voucher   Voucher  @relation(fields: [voucherId], references: [id])
+}
+
+// --- Inventory Management ---
+enum ValuationMethod {
+  FIFO
+  LIFO
+  WEIGHTED_AVERAGE
+}
+
+model StockGroup {
+  id          String      @id @default(cuid())
+  companyId   String
+  name        String
+  parentGroupId String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentGroup StockGroup? @relation("ChildStockGroups", fields: [parentGroupId], references: [id])
+  childGroups StockGroup[] @relation("ChildStockGroups")
+  stockItems  StockItem[]
+
+  @@unique([companyId, name])
+}
+
+model UnitOfMeasure {
+  id         String      @id @default(cuid())
+  companyId  String
+  name       String      @unique
+  symbol     String      @unique
+  isCompound Boolean     @default(false)
+  baseUnitId String?
+  conversionFactor Decimal? @db.Decimal(10, 4)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  baseUnit   UnitOfMeasure? @relation("CompoundUnits", fields: [baseUnitId], references: [id])
+  compoundUnits UnitOfMeasure[] @relation("CompoundUnits")
+  stockItems StockItem[] @relation("BaseUnit")
+  voucherItems VoucherItem[]
+}
+
+model Godown {
+  id          String        @id @default(cuid())
+  companyId   String
+  name        String        @unique
+  address     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
+}
+
+model StockItem {
+  id              String         @id @default(cuid())
+  companyId       String
+  stockGroupId    String
+  name            String
+  alias           String?
+  baseUnitId      String
+  gstPercentage   Decimal        @default(0.00) @db.Decimal(4, 2)
+  hsnCode         String?
+  valuationMethod ValuationMethod @default(FIFO)
+  openingQuantity Decimal        @default(0.00) @db.Decimal(10, 2)
+  openingRate     Decimal        @default(0.00) @db.Decimal(10, 2)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stockGroup      StockGroup     @relation(fields: [stockGroupId], references: [id])
+  baseUnit        UnitOfMeasure  @relation("BaseUnit", fields: [baseUnitId], references: [id])
+  voucherItems    VoucherItem[]
+  stockMovements  StockMovement[]
+
+  @@unique([companyId, name])
+}
+
+model StockMovement {
+  id          String   @id @default(cuid())
+  stockItemId String
+  godownId    String
+  voucherId   String
+  quantity    Decimal  @db.Decimal(10, 2)
+  rate        Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  createdAt   DateTime @default(now())
+  stockItem   StockItem @relation(fields: [stockItemId], references: [id])
+  godown      Godown   @relation(fields: [godownId], references: [id])
+  voucher     Voucher  @relation(fields: [voucherId], references: [id])
+}
+
+// --- Voucher Entry Module ---
+enum VoucherType {
+  CONTRA
+  PAYMENT
+  RECEIPT
+  SALES
+  PURCHASE
+  DEBIT_NOTE
+  CREDIT_NOTE
+  JOURNAL
+}
+
+model Voucher {
+  id               String        @id @default(cuid())
+  companyId        String
+  type             VoucherType
+  voucherNumber    String
+  date             DateTime
+  narration        String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  isDeleted        Boolean       @default(false)
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ledgerEntries    LedgerEntry[]
+  voucherItems     VoucherItem[]
+  stockMovements   StockMovement[]
+
+  @@unique([companyId, type, voucherNumber])
+}
+
+model VoucherItem {
+  id          String        @id @default(cuid())
+  voucherId   String
+  stockItemId String
+  unitOfMeasureId String
+  godownId    String?
+  quantity    Decimal       @db.Decimal(10, 2)
+  rate        Decimal       @db.Decimal(10, 2)
+  amount      Decimal       @db.Decimal(10, 2)
+  isDebit     Boolean
+  createdAt   DateTime      @default(now())
+  voucher     Voucher       @relation(fields: [voucherId], references: [id])
+  stockItem   StockItem     @relation(fields: [stockItemId], references: [id])
+  unitOfMeasure UnitOfMeasure @relation(fields: [unitOfMeasureId], references: [id])
+}
