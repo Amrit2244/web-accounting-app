@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const hashedPassword = await hashPassword(password);
 
     // Transaction to ensure atomicity: either user AND company are created, or neither
-    const newUserAndCompany = await db.$transaction(async (prisma) => {
+    const newUserAndCompany = await db.$transaction(async (prisma: typeof db) => {
       // Check if any company exists (to determine if this is the first admin)
       const companyCount = await prisma.company.count();
       const isFirstAdmin = companyCount === 0;

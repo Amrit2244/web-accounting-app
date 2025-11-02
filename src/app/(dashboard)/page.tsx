@@ -74,15 +74,22 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="flex gap-4">
+          <CardContent className="flex gap-4 flex-wrap">
             <Button variant="default">Add Voucher</Button>
-            <Button variant="outline">Add Stock Item</Button>
-            <Button variant="outline">Add Ledger</Button>
-            <Button variant="secondary" onClick={() => window.location.href = '/masters/groups'}>
-              Master Groups
+            <Button variant="outline" onClick={() => window.location.href = '/(masters)/inventory/items'}>
+              Inventory Items
             </Button>
-            <Button variant="secondary" onClick={() => window.location.href = '/masters/ledger'}>
+            <Button variant="outline" onClick={() => window.location.href = '/(masters)/inventory/godown'}>
+              Godown
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/(masters)/inventory/units'}>
+              Units
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/(masters)/masters/ledger'}>
               Master Ledger
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/(masters)/masters/groups'}>
+              Master Groups
             </Button>
           </CardContent>
         </Card>

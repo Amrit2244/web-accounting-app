@@ -3,7 +3,7 @@
 import NextAuth, { SessionStrategy } from "next-auth"; // ADD SessionStrategy here
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { UserRole } from "@prisma/client";
+// import { UserRole } from "@prisma/client"; // Removed, use string for role type
 import { verifyPassword } from "@/lib/auth";
 import db from "@/lib/db";
 // Explicitly type the PrismaClient instance if needed, though db from "@/lib/db" is fine
@@ -43,7 +43,7 @@ export const authOptions: any = {
           name: user.name,
           email: user.email,
           role: user.role,
-          companyIds: user.companies.map((uc) => uc.companyId),
+          companyIds: user.companies.map((uc: { companyId: any; }) => uc.companyId),
         };
       },
     }),
@@ -59,7 +59,7 @@ export const authOptions: any = {
     async jwt({ token, user }: { token: any; user?: any }) { // `session` not typically needed here
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role as UserRole; // Cast to UserRole
+        token.role = (user as any).role as string; // Cast to string
         token.companyIds = (user as any).companyIds as string[]; // Cast to string array
       }
       return token;
@@ -67,7 +67,7 @@ export const authOptions: any = {
     async session({ session, token }: { session: any; token: any }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as UserRole;
+        session.user.role = token.role as string;
         session.user.companyIds = token.companyIds as string[];
       }
       return session;
