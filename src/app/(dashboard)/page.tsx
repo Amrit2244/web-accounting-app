@@ -27,6 +27,9 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 grid gap-6">
+      <Button variant="outline" className="mb-4" onClick={() => window.location.href = '/'}>
+        ← Back to Home
+      </Button>
       <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -75,6 +78,12 @@ export default function DashboardPage() {
             <Button variant="default">Add Voucher</Button>
             <Button variant="outline">Add Stock Item</Button>
             <Button variant="outline">Add Ledger</Button>
+            <Button variant="secondary" onClick={() => window.location.href = '/masters/groups'}>
+              Master Groups
+            </Button>
+            <Button variant="secondary" onClick={() => window.location.href = '/masters/ledger'}>
+              Master Ledger
+            </Button>
           </CardContent>
         </Card>
       </div>
