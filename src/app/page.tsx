@@ -39,19 +39,27 @@ export default function DashboardPage() {
     }, 1800);
   }, []);
 
-  const { data: session } = require('next-auth/react').useSession();
+  const { useSession, signOut } = require('next-auth/react');
+  const { data: session } = useSession();
   return (
     <ProtectedRoute>
       <div className="min-h-screen flex flex-col bg-linear-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] text-white">
         {/* Dark Banking Navbar */}
         <nav className="bg-[#182848] bg-opacity-90 shadow-lg px-8 py-4 flex items-center justify-between border-b border-[#22304a] backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <span className="font-bold text-2xl tracking-wide text-[#6ee7b7] drop-shadow">Finacle</span>
-            <span className="bg-[#6ee7b7] text-[#182848] text-xs px-2 py-1 rounded shadow">Banking</span>
+            <span className="font-bold text-2xl tracking-wide text-[#6ee7b7] drop-shadow">Anaicle</span>
+            <span className="bg-[#6ee7b7] text-[#182848] text-xs px-2 py-1 rounded shadow">A S Softwares Pvt ltd</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#b0bec5]">Welcome, {session?.user?.name || "User"}</span>
-            <Button variant="outline" size="sm" className="border-[#6ee7b7] text-[#6ee7b7] hover:bg-[#6ee7b7] hover:text-[#182848] shadow-lg shadow-[#6ee7b7]/30 transition-all duration-200">Logout</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-[#6ee7b7] text-[#6ee7b7] hover:bg-[#6ee7b7] hover:text-[#182848] shadow-lg shadow-[#6ee7b7]/30 transition-all duration-200"
+              onClick={() => signOut()}
+            >
+              Logout
+            </Button>
           </div>
         </nav>
         <main className="flex-1 px-8 py-8">
@@ -102,15 +110,15 @@ export default function DashboardPage() {
                   <DollarSign className="w-5 h-5" />
                   Add Voucher
                 </Button>
-                <Button variant="outline" className="w-full flex flex-col items-center gap-1 border-[#60a5fa] text-[#60a5fa] hover:bg-[#60a5fa] hover:text-white shadow-lg shadow-[#60a5fa]/30 transition-all duration-200" onClick={() => window.location.href = '/(masters)/inventory/items'}>
+                <Button variant="outline" className="w-full flex flex-col items-center gap-1 border-[#60a5fa] text-[#60a5fa] hover:bg-[#60a5fa] hover:text-white shadow-lg shadow-[#60a5fa]/30 transition-all duration-200" onClick={() => window.location.href = '/masters/inventory/items'}>
                   <ShoppingCart className="w-5 h-5" />
                   Inventory Items
                 </Button>
-                <Button variant="outline" className="w-full flex flex-col items-center gap-1 border-[#fbbf24] text-[#fbbf24] hover:bg-[#fbbf24] hover:text-white shadow-lg shadow-[#fbbf24]/30 transition-all duration-200" onClick={() => window.location.href = '/(masters)/inventory/godown'}>
+                <Button variant="outline" className="w-full flex flex-col items-center gap-1 border-[#fbbf24] text-[#fbbf24] hover:bg-[#fbbf24] hover:text-white shadow-lg shadow-[#fbbf24]/30 transition-all duration-200" onClick={() => window.location.href = '/masters/inventory/godown'}>
                   <BarChart2 className="w-5 h-5" />
                   Godown
                 </Button>
-                <Button variant="outline" className="w-full flex flex-col items-center gap-1 border-[#6ee7b7] text-[#6ee7b7] hover:bg-[#6ee7b7] hover:text-white shadow-lg shadow-[#6ee7b7]/30 transition-all duration-200" onClick={() => window.location.href = '/(masters)/inventory/units'}>
+                <Button variant="outline" className="w-full flex flex-col items-center gap-1 border-[#6ee7b7] text-[#6ee7b7] hover:bg-[#6ee7b7] hover:text-white shadow-lg shadow-[#6ee7b7]/30 transition-all duration-200" onClick={() => window.location.href = '/masters/inventory/units'}>
                   <Users className="w-5 h-5" />
                   Units
                 </Button>

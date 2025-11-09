@@ -16,7 +16,7 @@ export async function PUT(req: Request) {
   });
   return NextResponse.json(updated);
 }
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
